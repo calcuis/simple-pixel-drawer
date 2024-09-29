@@ -1,5 +1,6 @@
 import pygame
 import sys
+from collections import deque
 
 # Initialize Pygame
 pygame.init()
@@ -9,7 +10,7 @@ window_size = 512  # 512x512 window for a 128x128 grid (4x scaling)
 grid_size = 128
 cell_size = window_size // grid_size
 screen = pygame.display.set_mode((window_size, window_size), pygame.SRCALPHA)
-pygame.display.set_caption("Pixel Drawer")
+pygame.display.set_caption("Simple Pixel Drawer")
 
 # Colors
 WHITE = (255, 255, 255)
@@ -21,12 +22,14 @@ colors = {
     "purple": (128, 0, 128),
     "cyan": (0, 255, 255),
     "orange": (255, 165, 0),
+    "white": (255, 255, 255),
     "black": (0, 0, 0),
 }
 
 selected_color = WHITE  # Default drawing color
 line_thickness = 2  # Default thickness for drawing
 eraser_mode = False  # Eraser mode toggle
+fill_mode = False  # Fill mode toggle
 
 # Grid setup (transparent canvas)
 TRANSPARENT = (0, 0, 0, 0)  # Fully transparent color
@@ -60,6 +63,29 @@ def fill_line_on_grid(start_pos, end_pos, color, thickness):
                 if 0 <= x < grid_size and 0 <= y < grid_size:
                     canvas[y][x] = color
 
+# Flood fill algorithm
+def flood_fill(x, y, target_color, replacement_color):
+    if target_color == replacement_color:
+        return
+
+    # If the clicked pixel is already the target color, we don't need to fill
+    if canvas[y][x] != target_color:
+        return
+
+    # BFS or DFS flood fill algorithm using a queue (BFS for simplicity)
+    queue = deque([(x, y)])
+    while queue:
+        cx, cy = queue.popleft()
+
+        if canvas[cy][cx] == target_color:
+            canvas[cy][cx] = replacement_color
+
+            # Add neighbors (up, down, left, right) if they are within bounds
+            if cx > 0: queue.append((cx - 1, cy))  # Left
+            if cx < grid_size - 1: queue.append((cx + 1, cy))  # Right
+            if cy > 0: queue.append((cx, cy - 1))  # Up
+            if cy < grid_size - 1: queue.append((cx, cy + 1))  # Down
+
 # Main loop
 running = True
 drawing = False
@@ -88,12 +114,18 @@ while running:
                 selected_color = colors["cyan"]
             elif event.key == pygame.K_7:
                 selected_color = colors["orange"]
+            elif event.key == pygame.K_8:
+                selected_color = colors["white"]
             elif event.key == pygame.K_0:
                 selected_color = colors["black"]
             # Toggle eraser mode
             elif event.key == pygame.K_e:
                 eraser_mode = not eraser_mode
                 print("Eraser mode:", "On" if eraser_mode else "Off")
+            # Toggle fill mode
+            elif event.key == pygame.K_f:
+                fill_mode = not fill_mode
+                print("Fill mode:", "On" if fill_mode else "Off")
             # Save the drawing
             elif event.key == pygame.K_s:
                 save_drawing()
@@ -105,8 +137,16 @@ while running:
                 line_thickness -= 1
                 print(f"Line thickness: {line_thickness}")
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            drawing = True
-            last_pos = pygame.mouse.get_pos()
+            if fill_mode:
+                # Get the clicked pixel position
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+                grid_x = mouse_x // cell_size
+                grid_y = mouse_y // cell_size
+                target_color = canvas[grid_y][grid_x]
+                flood_fill(grid_x, grid_y, target_color, selected_color)
+            else:
+                drawing = True
+                last_pos = pygame.mouse.get_pos()
         elif event.type == pygame.MOUSEBUTTONUP:
             drawing = False
         elif event.type == pygame.MOUSEMOTION and drawing:
