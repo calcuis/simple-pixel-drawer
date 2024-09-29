@@ -1,4 +1,4 @@
-### pixel drawer
+### simple pixel drawer
 ```
 py drawer.py
 ```
