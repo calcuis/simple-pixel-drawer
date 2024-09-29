@@ -17,6 +17,7 @@ Change colors with number keys:
 - `5`: Purple
 - `6`: Cyan
 - `7`: Orange
+- `8`: White
 - `0`: Black
 
 Adjust thickness using `+` and `-`
