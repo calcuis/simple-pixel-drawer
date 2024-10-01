@@ -22,6 +22,6 @@ Change colors with number keys:
 
 Adjust thickness using `+` and `-`
 
-Save drawing: Press `s` to save the current drawing as drawing.png with a transparent background
+Save drawing (png): Press `s` to save the current drawing as drawing.png with a transparent background
 
-Save drawing as svg: Press `v` to save the current drawing as drawing.svg
+Save drawing (svg): Press `v` to save the current drawing as drawing.svg
