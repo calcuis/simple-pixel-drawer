@@ -1,6 +1,5 @@
 import pygame
 import sys
-from collections import deque
 
 # Initialize Pygame
 pygame.init()
@@ -41,14 +40,27 @@ def draw_grid():
         for col in range(grid_size):
             pygame.draw.rect(screen, canvas[row][col], (col * cell_size, row * cell_size, cell_size, cell_size))
 
-# Function to save the drawing to an image file
-def save_drawing():
+# Function to save the drawing to a PNG file
+def save_drawing_png():
     drawing_surface = pygame.Surface((grid_size, grid_size), pygame.SRCALPHA)
     for row in range(grid_size):
         for col in range(grid_size):
             drawing_surface.set_at((col, row), canvas[row][col])
     pygame.image.save(drawing_surface, "drawing.png")
     print("Drawing saved as 'drawing.png' with a transparent background!")
+
+# Function to save the drawing to an SVG file
+def save_drawing_svg():
+    with open("drawing.svg", "w") as svg_file:
+        svg_file.write(f'<svg xmlns="http://www.w3.org/2000/svg" width="{grid_size}" height="{grid_size}">\n')
+        for row in range(grid_size):
+            for col in range(grid_size):
+                color = canvas[row][col]
+                if color != TRANSPARENT:
+                    hex_color = f"#{color[0]:02x}{color[1]:02x}{color[2]:02x}"
+                    svg_file.write(f'<rect x="{col}" y="{row}" width="1" height="1" fill="{hex_color}" />\n')
+        svg_file.write('</svg>\n')
+    print("Drawing saved as 'drawing.svg'!")
 
 # Function to fill cells on the grid based on the line drawn
 def fill_line_on_grid(start_pos, end_pos, color, thickness):
@@ -73,9 +85,9 @@ def flood_fill(x, y, target_color, replacement_color):
         return
 
     # BFS or DFS flood fill algorithm using a queue (BFS for simplicity)
-    queue = deque([(x, y)])
+    queue = [(x, y)]
     while queue:
-        cx, cy = queue.popleft()
+        cx, cy = queue.pop()
 
         if canvas[cy][cx] == target_color:
             canvas[cy][cx] = replacement_color
@@ -126,9 +138,12 @@ while running:
             elif event.key == pygame.K_f:
                 fill_mode = not fill_mode
                 print("Fill mode:", "On" if fill_mode else "Off")
-            # Save the drawing
+            # Save as PNG
             elif event.key == pygame.K_s:
-                save_drawing()
+                save_drawing_png()
+            # Save as SVG
+            elif event.key == pygame.K_v:
+                save_drawing_svg()
             # Change line thickness
             elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
                 line_thickness += 1
