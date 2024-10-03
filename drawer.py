@@ -1,5 +1,6 @@
 import pygame
 import sys
+import copy
 
 # Initialize Pygame
 pygame.init()
@@ -33,6 +34,35 @@ fill_mode = False  # Fill mode toggle
 # Grid setup (transparent canvas)
 TRANSPARENT = (0, 0, 0, 0)  # Fully transparent color
 canvas = [[TRANSPARENT for _ in range(grid_size)] for _ in range(grid_size)]
+
+# History for Undo/Redo
+undo_stack = []
+redo_stack = []
+
+# Save current canvas state for undo/redo functionality
+def save_state():
+    undo_stack.append(copy.deepcopy(canvas))
+    if len(undo_stack) > 50:  # Limit the undo history to 50 states
+        undo_stack.pop(0)
+    redo_stack.clear()  # Clear the redo stack after new action
+
+# Function to undo the last action
+def undo():
+    if undo_stack:
+        redo_stack.append(copy.deepcopy(canvas))  # Save current state to redo stack
+        previous_state = undo_stack.pop()  # Pop the last state from undo stack
+        for row in range(grid_size):
+            for col in range(grid_size):
+                canvas[row][col] = previous_state[row][col]
+
+# Function to redo the last undone action
+def redo():
+    if redo_stack:
+        undo_stack.append(copy.deepcopy(canvas))  # Save current state to undo stack
+        next_state = redo_stack.pop()  # Pop the last state from redo stack
+        for row in range(grid_size):
+            for col in range(grid_size):
+                canvas[row][col] = next_state[row][col]
 
 # Function to draw the grid and pixels
 def draw_grid():
@@ -139,7 +169,7 @@ while running:
                 fill_mode = not fill_mode
                 print("Fill mode:", "On" if fill_mode else "Off")
             # Save as PNG
-            elif event.key == pygame.K_s:
+            elif event.key == pygame.K_p:
                 save_drawing_png()
             # Save as SVG
             elif event.key == pygame.K_v:
@@ -151,6 +181,14 @@ while running:
             elif event.key == pygame.K_MINUS and line_thickness > 1:
                 line_thickness -= 1
                 print(f"Line thickness: {line_thickness}")
+            # Undo action
+            elif event.key == pygame.K_u:
+                undo()
+                print("Undo action performed.")
+            # Redo action
+            elif event.key == pygame.K_r:
+                redo()
+                print("Redo action performed.")
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if fill_mode:
                 # Get the clicked pixel position
@@ -158,21 +196,22 @@ while running:
                 grid_x = mouse_x // cell_size
                 grid_y = mouse_y // cell_size
                 target_color = canvas[grid_y][grid_x]
+                save_state()  # Save the state before filling
                 flood_fill(grid_x, grid_y, target_color, selected_color)
             else:
                 drawing = True
                 last_pos = pygame.mouse.get_pos()
+                save_state()  # Save the state before starting the drawing action
         elif event.type == pygame.MOUSEBUTTONUP:
             drawing = False
-        elif event.type == pygame.MOUSEMOTION and drawing:
-            current_pos = pygame.mouse.get_pos()
-            if eraser_mode:
-                fill_line_on_grid(last_pos, current_pos, TRANSPARENT, line_thickness)
-            else:
-                fill_line_on_grid(last_pos, current_pos, selected_color, line_thickness)
-            last_pos = current_pos  # Update last position to current
+            last_pos = None
+        elif event.type == pygame.MOUSEMOTION:
+            if drawing:
+                current_pos = pygame.mouse.get_pos()
+                color_to_draw = TRANSPARENT if eraser_mode else selected_color
+                fill_line_on_grid(last_pos, current_pos, color_to_draw, line_thickness)
+                last_pos = current_pos
 
-    # Update the display
     pygame.display.flip()
 
 # Quit Pygame
