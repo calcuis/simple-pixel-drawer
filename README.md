@@ -24,6 +24,6 @@ Adjust thickness using `+` and `-`
 
 Undo and Redo using `u` and `r`
 
-Save drawing (png): Press `s` to save the current drawing as drawing.png with a transparent background
+Save drawing (png): Press `p` to save the current drawing as drawing.png with a transparent background
 
 Save drawing (svg): Press `v` to save the current drawing as drawing.svg (experimental feature)
